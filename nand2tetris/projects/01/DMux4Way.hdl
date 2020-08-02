@@ -16,9 +16,12 @@ CHIP DMux4Way {
     OUT a, b, c, d;
 
     PARTS:
+    // Muxとは逆に上位ビットから戻っていく
     DMux(in=in, sel=sel[1], a=tmpA, b=tmpC);
     DMux(in=in, sel=sel[1], a=tmpB, b=tmpD);
 
+    // sel=00のとき、{in, in, 0, 0}になっている
+    // sel[0]でinを残す場所を切り替える
     Not(in=sel[0], out=tmpSel);
 
     And(a=tmpA, b=tmpSel, out=a);
