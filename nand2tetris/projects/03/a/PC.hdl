@@ -16,5 +16,24 @@ CHIP PC {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+    // Get before Data
+    Register(in=befOut, load=true, out=tmpOutBef);
+    Bit(in=befInc, load=true, out=tmpIncBef);
+    Bit(in=befLoad, load=true, out=tmpLoadBef);
+    Bit(in=befReset, load=true, out=tmpResetBef);
+    
+    // inc
+    Inc16(in=tmpOutBef, out=tmpOutI);
+    Mux16(a=tmpOutBef, b=tmpOutI, sel=tmpIncBef, out=tmpOutInc);
+
+    // load
+    Mux16(a=tmpOutInc, b=in, sel=tmpLoadBef, out=tmpOutLoad);
+
+    // reset
+    Mux16(a=tmpOutLoad, b[0..15]=false, sel=tmpResetBef, out=out, out=befOut);
+
+    // Save Data
+    Or(a=inc, b=false, out=befInc);
+    Or(a=load, b=false, out=befLoad);
+    Or(a=reset, b=false, out=befReset);
 }
