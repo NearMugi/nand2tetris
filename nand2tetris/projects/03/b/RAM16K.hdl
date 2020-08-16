@@ -15,5 +15,17 @@ CHIP RAM16K {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+    // addressに合わせてフラグを立てる
+    // 000 -> {1, 0, 0, 0, 0, 0, 0, 0}
+    // 001 -> {0, 1, 0, 0, 0, 0, 0, 0}
+    DMux4Way(in=load, sel=address[12..13], a=flg0, b=flg1, c=flg2, d=flg3);
+
+    RAM4K(in=in, load=flg0, address=address[0..11], out=tmpOut0);
+    RAM4K(in=in, load=flg1, address=address[0..11], out=tmpOut1);
+    RAM4K(in=in, load=flg2, address=address[0..11], out=tmpOut2);
+    RAM4K(in=in, load=flg3, address=address[0..11], out=tmpOut3);
+
+    // output
+    // addressに合わせてOutputを決める
+    Mux4Way16(a=tmpOut0, b=tmpOut1, c=tmpOut2, d=tmpOut3, sel=address[12..13], out=out);
 }

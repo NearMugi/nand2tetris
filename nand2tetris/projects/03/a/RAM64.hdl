@@ -15,5 +15,21 @@ CHIP RAM64 {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+    // addressに合わせてフラグを立てる
+    // 000 -> {1, 0, 0, 0, 0, 0, 0, 0}
+    // 001 -> {0, 1, 0, 0, 0, 0, 0, 0}
+    DMux8Way(in=load, sel=address[3..5], a=flg0, b=flg1, c=flg2, d=flg3, e=flg4, f=flg5, g=flg6, h=flg7);
+
+    RAM8(in=in, load=flg0, address=address[0..2], out=tmpOut0);
+    RAM8(in=in, load=flg1, address=address[0..2], out=tmpOut1);
+    RAM8(in=in, load=flg2, address=address[0..2], out=tmpOut2);
+    RAM8(in=in, load=flg3, address=address[0..2], out=tmpOut3);
+    RAM8(in=in, load=flg4, address=address[0..2], out=tmpOut4);
+    RAM8(in=in, load=flg5, address=address[0..2], out=tmpOut5);
+    RAM8(in=in, load=flg6, address=address[0..2], out=tmpOut6);
+    RAM8(in=in, load=flg7, address=address[0..2], out=tmpOut7);
+
+    // output
+    // addressに合わせてOutputを決める
+    Mux8Way16(a=tmpOut0, b=tmpOut1, c=tmpOut2, d=tmpOut3, e=tmpOut4, f=tmpOut5, g=tmpOut6, h=tmpOut7, sel=address[3..5], out=out);
 }
