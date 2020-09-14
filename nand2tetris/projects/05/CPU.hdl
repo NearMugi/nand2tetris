@@ -39,5 +39,54 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-    // Put your code here:
+    // Decode
+    Not(in=instruction[15], out=flgAC);
+    // C命令のとき(15ビット目が1)はcomp,dest,jumpの値を取得する
+    And(a=instruction[15], b=true, out=tmpFlgAC);
+    And(a=instruction[12], b=tmpFlgAC, out=compA);
+    And(a=instruction[11], b=tmpFlgAC, out=compC1);
+    And(a=instruction[10], b=tmpFlgAC, out=compC2);
+    And(a=instruction[9], b=tmpFlgAC, out=compC3);
+    And(a=instruction[8], b=tmpFlgAC, out=compC4);
+    And(a=instruction[7], b=tmpFlgAC, out=compC5);
+    And(a=instruction[6], b=tmpFlgAC, out=compC6);
+    And(a=instruction[5], b=tmpFlgAC, out=compD1);
+    And(a=instruction[4], b=tmpFlgAC, out=compD2);
+    And(a=instruction[3], b=tmpFlgAC, out=compD3);
+    And(a=instruction[2], b=tmpFlgAC, out=compJ1);
+    And(a=instruction[1], b=tmpFlgAC, out=compJ2);
+    And(a=instruction[0], b=tmpFlgAC, out=compJ3);
+
+    // A Register
+    // set ddressM
+    Mux16(a=outALUM, b=instruction, sel=flgAC, out=inARegister);
+    // ↓これが必要だった A命令のときは無条件に前回の値を呼び出す
+    Or(a=flgAC, b=compD1, out=intoA);
+    ARegister(in=inARegister, load=intoA, out=outARegister, out[0..14]=addressM);
+
+    // ALU
+    Mux16(a=outARegister, b=inM, sel=compA, out=inALU);
+    ALU(x=outDRegister, y=inALU, zx=compC1, nx=compC2, zy=compC3, ny=compC4, f=compC5, no=compC6, out=outALUM, out=outM, zr=zr, ng=ng);
+
+    // D Register
+    DRegister(in=outALUM, load=compD2, out=outDRegister);
+
+    // writeM
+    And(a=compD3, b=true, out=writeM);
+
+    // PC
+    Not(in=ng, out=pos);
+    Not(in=zr, out=nzr);
+
+    And(a=compJ1, b=ng, out=tmpJmpJ1);
+    And(a=compJ2, b=zr, out=tmpJmpJ2);
+
+    And(a=pos, b=nzr, out=posNzr);
+    And(a=compJ3, b=posNzr, out=tmpJmpJ3);
+    
+    Or(a=tmpJmpJ1, b=tmpJmpJ2, out=tmpJmpJ1J2);
+    Or(a=tmpJmpJ1J2, b=tmpJmpJ3, out=jmp);
+    
+    PC(in=outARegister, load=jmp, inc=true, reset=reset, out[0..14]=pc);
+
 }
