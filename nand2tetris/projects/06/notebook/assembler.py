@@ -302,7 +302,7 @@ def getAssembleCode(l, st):
 
 import sys
 def main(inputFn):
-    '''アセンブラファイル(.hack)に変換する'''
+    '''バイナリファイル(.hack)に変換する'''
     outputFn = inputFn.replace('.asm', '.hack')
     if not '.hack' in outputFn:
         return False
