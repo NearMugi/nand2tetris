@@ -44,7 +44,7 @@
 # 
 # コマンドごとに書き方は決まっている。基本形を定義して必要に応じて差し替える。
 
-# In[15]:
+# In[1]:
 
 
 class arithmeticCommand():
@@ -120,7 +120,7 @@ if __name__ != '__main__':
 # 
 # 
 
-# In[16]:
+# In[2]:
 
 
 class memoryAccessCommand():
@@ -197,29 +197,37 @@ if __name__ != '__main__':
 # |goto xxx|無条件の移動命令|
 # |if-goto xxx|条件付きの移動命令。スタックの最上位の値をポップし、その値がゼロでなければ移動する|
 
-# In[40]:
+# In[7]:
 
 
 class programFlowCommand():
     '''プログラムフローコマンドの変換'''
     def __init__(self):
         self.cmdLabel = "(LABEL)\n"
-        self.cmdGoto = "GOTO\n"
-        self.cmdIfGoto = "IF-GOTO\n"
+        self.cmdGoto = "@LABEL\n0;JMP\n"
+        # 1. スタックの最上位データを取得する
+        # 2. SPを1つ戻す
+        # 3. 最上位データがゼロでなければ移動する
+        self.cmdIfGoto = "@SP\nA=M\nA=A-1\nD=M\n"
+        self.cmdIfGoto += "@SP\nM=M-1\n"
+        self.cmdIfGoto += "@LABEL\nD;JNE\n"
     
     def get(self, ptn, label):
         '''コマンドを取得する。存在しない場合は空白'''
         print(ptn)
-        if ptn == 'label':   
-            retValue = self.cmdLabel.replace('LABEL', label)
+        if ptn == 'label':
+            cmd = self.cmdLabel
+            retValue = cmd.replace('LABEL', label)
             return True, retValue 
 
         if ptn == 'goto':
-            retValue = self.cmdGoto
+            cmd = self.cmdGoto
+            retValue = cmd.replace('LABEL', label)
             return True, retValue 
         
         if ptn == 'if-goto':
-            retValue = self.cmdIfGoto
+            cmd = self.cmdIfGoto
+            retValue = cmd.replace('LABEL', label)
             return True, retValue 
         
         return False, '' 
@@ -231,7 +239,7 @@ if __name__ != '__main__':
 
 # ### パース
 
-# In[59]:
+# In[4]:
 
 
 def parse(ac, mac, pfc, l, fn):
@@ -275,7 +283,7 @@ if __name__ != '__main__':
     print(parse(ac, mac, l, fn))
 
 
-# In[60]:
+# In[9]:
 
 
 import sys
@@ -333,7 +341,7 @@ def main(folderPath):
 
 if __name__ == '__main__':
     #folderPath = sys.argv[1]
-    folderPath = "D:/#WorkSpace/nand2tetris/nand2tetris/projects/08/ProgramFlow/BasicLoop"
+    folderPath = "D:/#WorkSpace/nand2tetris/nand2tetris/projects/08/ProgramFlow/FibonacciSeries"
     #folderPath = "D:/#WorkSpace/nand2tetris/nand2tetris/projects/08/FunctionCalls/FibonacciElement"
     isAssemble = main(folderPath)
     print(isAssemble)
