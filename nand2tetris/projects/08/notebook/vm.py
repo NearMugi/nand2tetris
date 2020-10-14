@@ -197,7 +197,7 @@ if __name__ != '__main__':
 # |goto xxx|無条件の移動命令|
 # |if-goto xxx|条件付きの移動命令。スタックの最上位の値をポップし、その値がゼロでなければ移動する|
 
-# In[29]:
+# In[20]:
 
 
 class programFlowCommand():
@@ -208,9 +208,8 @@ class programFlowCommand():
         # 1. スタックの最上位データを取得する
         # 2. SPを1つ戻す
         # 3. 最上位データがゼロでなければ移動する
-        self.cmdIfGoto = "@SP\nA=M\nA=A-1\nD=M\n"
-        self.cmdIfGoto += "@SP\nM=M-1\n"
-        self.cmdIfGoto += "@LABEL\nD;JNE\n"
+        self.cmdIfGoto = "@SP\nAM=M-1\n"
+        self.cmdIfGoto += "D=M\n@LABEL\nD;JNE\n"
     
     def get(self, ptn, label):
         '''コマンドを取得する。存在しない場合は空白'''
@@ -244,7 +243,7 @@ if __name__ != '__main__':
 # |call f m|fという関数を呼ぶ。m個の引数はスタックにプッシュ済み|
 # |return|呼び出し元へリターンする|
 
-# In[46]:
+# In[18]:
 
 
 class functionCallCommand():
@@ -256,26 +255,50 @@ class functionCallCommand():
         self.cmdFunction = "(LABEL)\n"
         self.cmdFunctionPush = "@SP\nA=M\nM=0\n@SP\nM=M+1\n"
         
+        # call f m
+        # 1. リターンラベルを設定してスタックにPush
+        # 2. LCL～THATをスタックにPush
+        # 3. ARGにSP - (n + 5) をセット
+        # 4, LCLに SP をセット
+        # 5. functionに移動
+        # 6. リターンラベルをセット
+        cmdPush = "@SP\nA=M\nM=D\n@SP\nM=M+1\n"
+        self.cmdCall = "// 1\n"
+        self.cmdCall += "@FUNC-ret\nD=A\n" + cmdPush
+        self.cmdCall += "// 2\n"
+        self.cmdCall += "@LCL\nD=M\n" + cmdPush
+        self.cmdCall += "@ARG\nD=M\n" + cmdPush
+        self.cmdCall += "@THIS\nD=M\n" + cmdPush
+        self.cmdCall += "@THAT\nD=M\n" + cmdPush
+        self.cmdCall += "// 3\n"
+        self.cmdCall += "@CNT\nD=A\n@5\nD=D+A\n@SP\nD=M-D\n@ARG\nM=D\n"
+        self.cmdCall += "// 4\n"
+        self.cmdCall += "@SP\nD=M\n@LCL\nM=D\n"
+        self.cmdCall += "// 5\n"
+        self.cmdCall += "@FUNC\n0;JMP\n"
+        self.cmdCall += "// 5\n"
+        self.cmdCall += "(FUNC-ret)\n"
+        
         # return
-        # 1. スタックを戻す
+        # 1. LCLをR13に保存しておく
+        # 2. 呼び出し元アドレスをR14に保存しておく
+        # 3. スタックを戻す
         #    ARGの位置に返値セット、SPをARG+1にする
-        # 2. LCLをR13に保存しておく
-        # 3. 呼び出し元アドレスをR14に保存しておく
         # 4. 呼び出し元のLCL～THATに戻す
         #    LCLの位置から-1～-4に呼び出し元の値が入っている
         # 5. 2.で保存した呼び出し側のアドレスに移動する
         self.cmdReturn = "// 1\n"
-        self.cmdReturn += "@SP\nA=M\nA=A-1\nD=M\n@ARG\nA=M\nM=D\n@ARG\nD=M\n@SP\nM=D+1\n"
-        self.cmdReturn += "// 2\n"
         self.cmdReturn += "@LCL\nD=M\n@R13\nM=D\n"
-        self.cmdReturn += "// 3\n"
+        self.cmdReturn += "// 2\n"
         self.cmdReturn += "@R13\nD=M\n@5\nA=D-A\nD=M\n@R14\nM=D\n"
         self.cmdReturn += "// 3\n"
+        self.cmdReturn += "@SP\nA=M-1\nD=M\n@ARG\nA=M\nM=D\n@ARG\nD=M+1\n@SP\nM=D\n"
+        self.cmdReturn += "// 4\n"
         self.cmdReturn += "@R13\nD=M\n@1\nA=D-A\nD=M\n@THAT\nM=D\n"
         self.cmdReturn += "@R13\nD=M\n@2\nA=D-A\nD=M\n@THIS\nM=D\n"
         self.cmdReturn += "@R13\nD=M\n@3\nA=D-A\nD=M\n@ARG\nM=D\n"
         self.cmdReturn += "@R13\nD=M\n@4\nA=D-A\nD=M\n@LCL\nM=D\n"
-        self.cmdReturn += "// 4\n"
+        self.cmdReturn += "// 5\n"
         self.cmdReturn += "@R14\nA=M\n0;JMP\n"
         
     def get3Args(self, ptn, func, cnt):
@@ -288,7 +311,9 @@ class functionCallCommand():
             return True, retValue 
 
         if ptn == 'call':
-            retValue = ''
+            retValue = self.cmdCall
+            retValue = retValue.replace("FUNC", func)
+            retValue = retValue.replace("CNT", cnt)
             return True, retValue 
         
         return False, '' 
@@ -302,7 +327,7 @@ class functionCallCommand():
 
 # ### パース
 
-# In[7]:
+# In[35]:
 
 
 def parse(ac, mac, pfc, fcc, l, fn):
@@ -326,7 +351,12 @@ def parse(ac, mac, pfc, fcc, l, fn):
     isGet = False
     retCmd = ''
     if len(cmd) == 1:
-        isGet, retCmd = ac.get(cmd[0])
+        # Sys専用
+        if cmd[0] == "bootStrap":
+            isGet = True
+            retCmd = "@256\nD=A\n@SP\nM=D\n"
+        if not isGet:
+            isGet, retCmd = ac.get(cmd[0])
         if not isGet:
             isGet, retCmd = fcc.get1Args(cmd[0])
 
@@ -351,12 +381,16 @@ if __name__ != '__main__':
     print(parse(ac, mac, l, fn))
 
 
-# In[47]:
+# In[50]:
 
 
 import sys
 import re
 import os
+def flatten(nested_list):
+    """2重のリストをフラットにする関数"""
+    return [e for inner_list in nested_list for e in inner_list]
+
 def main(folderPath):
     '''フォルダ内の.vmファイルをアセンブラファイル(.asm)に変換する'''
     
@@ -374,10 +408,14 @@ def main(folderPath):
     if "Sys.vm" in vmFiles:
         # ファイル名をリストに保存
         inputFn.append("Sys")
+        # Sys 専用コマンドを先頭に追加
+        inputLines += [["bootStrap\n", "call Sys.init 0\n"]]
         with open(os.path.join(folderPath, "Sys.vm"), 'r') as fin:
             # ファイルの中身をリストに保存
-            inputLines.append(fin.readlines())
-            
+            inputLines.append(fin.readlines())            
+        # 一度多重リストをフラットにしてまた多重リストにする
+        inputLines = [flatten(inputLines)]
+        
     # Sys.vm 以外を取得する
     vmFiles = [f for f in vmFiles if not "Sys.vm" in f]
     for fn in vmFiles:
@@ -411,7 +449,7 @@ def main(folderPath):
 if __name__ == '__main__':
     #folderPath = sys.argv[1]
     #folderPath = "D:/#WorkSpace/nand2tetris/nand2tetris/projects/08/ProgramFlow/FibonacciSeries"
-    folderPath = "D:/#WorkSpace/nand2tetris/nand2tetris/projects/08/FunctionCalls/SimpleFunction"
+    folderPath = "D:/#WorkSpace/nand2tetris/nand2tetris/projects/08/FunctionCalls/FibonacciElement"
     isAssemble = main(folderPath)
     print(isAssemble)
 

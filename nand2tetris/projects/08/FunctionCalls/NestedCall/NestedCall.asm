@@ -1,0 +1,734 @@
+// bootStrap
+@256
+D=A
+@SP
+M=D
+// call Sys.init 0
+// 1
+@Sys.init-ret
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// 2
+@LCL
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@ARG
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@THIS
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@THAT
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// 3
+@0
+D=A
+@5
+D=D+A
+@SP
+D=M-D
+@ARG
+M=D
+// 4
+@SP
+D=M
+@LCL
+M=D
+// 5
+@Sys.init
+0;JMP
+// 5
+(Sys.init-ret)
+// function Sys.init 0
+(Sys.init)
+// push constant 4000	// test THIS and THAT context save
+@4000
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// pop pointer 0
+@3
+D=A
+@0
+D=D+A
+@SP
+A=M
+M=D
+@SP
+A=M
+A=A-1
+D=M
+A=A+1
+A=M
+M=D
+@SP
+M=M-1
+// push constant 5000
+@5000
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// pop pointer 1
+@3
+D=A
+@1
+D=D+A
+@SP
+A=M
+M=D
+@SP
+A=M
+A=A-1
+D=M
+A=A+1
+A=M
+M=D
+@SP
+M=M-1
+// call Sys.main 0
+// 1
+@Sys.main-ret
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// 2
+@LCL
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@ARG
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@THIS
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@THAT
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// 3
+@0
+D=A
+@5
+D=D+A
+@SP
+D=M-D
+@ARG
+M=D
+// 4
+@SP
+D=M
+@LCL
+M=D
+// 5
+@Sys.main
+0;JMP
+// 5
+(Sys.main-ret)
+// pop temp 1
+@5
+D=A
+@1
+D=D+A
+@SP
+A=M
+M=D
+@SP
+A=M
+A=A-1
+D=M
+A=A+1
+A=M
+M=D
+@SP
+M=M-1
+// label LOOP
+(LOOP)
+// goto LOOP
+@LOOP
+0;JMP
+// function Sys.main 5
+(Sys.main)
+@SP
+A=M
+M=0
+@SP
+M=M+1
+@SP
+A=M
+M=0
+@SP
+M=M+1
+@SP
+A=M
+M=0
+@SP
+M=M+1
+@SP
+A=M
+M=0
+@SP
+M=M+1
+@SP
+A=M
+M=0
+@SP
+M=M+1
+// push constant 4001
+@4001
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// pop pointer 0
+@3
+D=A
+@0
+D=D+A
+@SP
+A=M
+M=D
+@SP
+A=M
+A=A-1
+D=M
+A=A+1
+A=M
+M=D
+@SP
+M=M-1
+// push constant 5001
+@5001
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// pop pointer 1
+@3
+D=A
+@1
+D=D+A
+@SP
+A=M
+M=D
+@SP
+A=M
+A=A-1
+D=M
+A=A+1
+A=M
+M=D
+@SP
+M=M-1
+// push constant 200
+@200
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// pop local 1
+@LCL
+D=M
+@1
+D=D+A
+@SP
+A=M
+M=D
+@SP
+A=M
+A=A-1
+D=M
+A=A+1
+A=M
+M=D
+@SP
+M=M-1
+// push constant 40
+@40
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// pop local 2
+@LCL
+D=M
+@2
+D=D+A
+@SP
+A=M
+M=D
+@SP
+A=M
+A=A-1
+D=M
+A=A+1
+A=M
+M=D
+@SP
+M=M-1
+// push constant 6
+@6
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// pop local 3
+@LCL
+D=M
+@3
+D=D+A
+@SP
+A=M
+M=D
+@SP
+A=M
+A=A-1
+D=M
+A=A+1
+A=M
+M=D
+@SP
+M=M-1
+// push constant 123
+@123
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// call Sys.add12 1
+// 1
+@Sys.add12-ret
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// 2
+@LCL
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@ARG
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@THIS
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@THAT
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// 3
+@1
+D=A
+@5
+D=D+A
+@SP
+D=M-D
+@ARG
+M=D
+// 4
+@SP
+D=M
+@LCL
+M=D
+// 5
+@Sys.add12
+0;JMP
+// 5
+(Sys.add12-ret)
+// pop temp 0
+@5
+D=A
+@0
+D=D+A
+@SP
+A=M
+M=D
+@SP
+A=M
+A=A-1
+D=M
+A=A+1
+A=M
+M=D
+@SP
+M=M-1
+// push local 0
+@0
+D=A
+@LCL
+A=D+M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// push local 1
+@1
+D=A
+@LCL
+A=D+M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// push local 2
+@2
+D=A
+@LCL
+A=D+M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// push local 3
+@3
+D=A
+@LCL
+A=D+M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// push local 4
+@4
+D=A
+@LCL
+A=D+M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// add
+@SP
+A=M
+A=A-1
+A=A-1
+D=M
+A=A+1
+D=D+M
+@SP
+M=M-1
+A=M
+A=A-1
+M=D
+// add
+@SP
+A=M
+A=A-1
+A=A-1
+D=M
+A=A+1
+D=D+M
+@SP
+M=M-1
+A=M
+A=A-1
+M=D
+// add
+@SP
+A=M
+A=A-1
+A=A-1
+D=M
+A=A+1
+D=D+M
+@SP
+M=M-1
+A=M
+A=A-1
+M=D
+// add
+@SP
+A=M
+A=A-1
+A=A-1
+D=M
+A=A+1
+D=D+M
+@SP
+M=M-1
+A=M
+A=A-1
+M=D
+// return
+// 1
+@LCL
+D=M
+@R13
+M=D
+// 2
+@R13
+D=M
+@5
+A=D-A
+D=M
+@R14
+M=D
+// 3
+@SP
+A=M-1
+D=M
+@ARG
+A=M
+M=D
+@ARG
+D=M+1
+@SP
+M=D
+// 4
+@R13
+D=M
+@1
+A=D-A
+D=M
+@THAT
+M=D
+@R13
+D=M
+@2
+A=D-A
+D=M
+@THIS
+M=D
+@R13
+D=M
+@3
+A=D-A
+D=M
+@ARG
+M=D
+@R13
+D=M
+@4
+A=D-A
+D=M
+@LCL
+M=D
+// 5
+@R14
+A=M
+0;JMP
+// function Sys.add12 0
+(Sys.add12)
+// push constant 4002
+@4002
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// pop pointer 0
+@3
+D=A
+@0
+D=D+A
+@SP
+A=M
+M=D
+@SP
+A=M
+A=A-1
+D=M
+A=A+1
+A=M
+M=D
+@SP
+M=M-1
+// push constant 5002
+@5002
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// pop pointer 1
+@3
+D=A
+@1
+D=D+A
+@SP
+A=M
+M=D
+@SP
+A=M
+A=A-1
+D=M
+A=A+1
+A=M
+M=D
+@SP
+M=M-1
+// push argument 0
+@0
+D=A
+@ARG
+A=D+M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// push constant 12
+@12
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// add
+@SP
+A=M
+A=A-1
+A=A-1
+D=M
+A=A+1
+D=D+M
+@SP
+M=M-1
+A=M
+A=A-1
+M=D
+// return
+// 1
+@LCL
+D=M
+@R13
+M=D
+// 2
+@R13
+D=M
+@5
+A=D-A
+D=M
+@R14
+M=D
+// 3
+@SP
+A=M-1
+D=M
+@ARG
+A=M
+M=D
+@ARG
+D=M+1
+@SP
+M=D
+// 4
+@R13
+D=M
+@1
+A=D-A
+D=M
+@THAT
+M=D
+@R13
+D=M
+@2
+A=D-A
+D=M
+@THIS
+M=D
+@R13
+D=M
+@3
+A=D-A
+D=M
+@ARG
+M=D
+@R13
+D=M
+@4
+A=D-A
+D=M
+@LCL
+M=D
+// 5
+@R14
+A=M
+0;JMP
