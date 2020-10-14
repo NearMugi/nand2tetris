@@ -197,7 +197,7 @@ if __name__ != '__main__':
 # |goto xxx|無条件の移動命令|
 # |if-goto xxx|条件付きの移動命令。スタックの最上位の値をポップし、その値がゼロでなければ移動する|
 
-# In[7]:
+# In[29]:
 
 
 class programFlowCommand():
@@ -214,7 +214,6 @@ class programFlowCommand():
     
     def get(self, ptn, label):
         '''コマンドを取得する。存在しない場合は空白'''
-        print(ptn)
         if ptn == 'label':
             cmd = self.cmdLabel
             retValue = cmd.replace('LABEL', label)
@@ -237,16 +236,81 @@ if __name__ != '__main__':
     
 
 
+# ## 関数呼び出しコマンド  
+# 
+# |コマンド|コメント|
+# |:--:|:--|
+# |function f n|n個のローカル変数を持つfという名前の関数を定義する|
+# |call f m|fという関数を呼ぶ。m個の引数はスタックにプッシュ済み|
+# |return|呼び出し元へリターンする|
+
+# In[46]:
+
+
+class functionCallCommand():
+    '''関数呼び出しコマンドの変換'''
+    def __init__(self):
+        # function f n
+        # 1. 関数のラベルを宣言
+        # 2. ローカル変数の個数分だけスタックにPush＆初期化
+        self.cmdFunction = "(LABEL)\n"
+        self.cmdFunctionPush = "@SP\nA=M\nM=0\n@SP\nM=M+1\n"
+        
+        # return
+        # 1. スタックを戻す
+        #    ARGの位置に返値セット、SPをARG+1にする
+        # 2. LCLをR13に保存しておく
+        # 3. 呼び出し元アドレスをR14に保存しておく
+        # 4. 呼び出し元のLCL～THATに戻す
+        #    LCLの位置から-1～-4に呼び出し元の値が入っている
+        # 5. 2.で保存した呼び出し側のアドレスに移動する
+        self.cmdReturn = "// 1\n"
+        self.cmdReturn += "@SP\nA=M\nA=A-1\nD=M\n@ARG\nA=M\nM=D\n@ARG\nD=M\n@SP\nM=D+1\n"
+        self.cmdReturn += "// 2\n"
+        self.cmdReturn += "@LCL\nD=M\n@R13\nM=D\n"
+        self.cmdReturn += "// 3\n"
+        self.cmdReturn += "@R13\nD=M\n@5\nA=D-A\nD=M\n@R14\nM=D\n"
+        self.cmdReturn += "// 3\n"
+        self.cmdReturn += "@R13\nD=M\n@1\nA=D-A\nD=M\n@THAT\nM=D\n"
+        self.cmdReturn += "@R13\nD=M\n@2\nA=D-A\nD=M\n@THIS\nM=D\n"
+        self.cmdReturn += "@R13\nD=M\n@3\nA=D-A\nD=M\n@ARG\nM=D\n"
+        self.cmdReturn += "@R13\nD=M\n@4\nA=D-A\nD=M\n@LCL\nM=D\n"
+        self.cmdReturn += "// 4\n"
+        self.cmdReturn += "@R14\nA=M\n0;JMP\n"
+        
+    def get3Args(self, ptn, func, cnt):
+        '''コマンドを取得する。存在しない場合は空白'''
+        if ptn == 'function':
+            retValue = self.cmdFunction
+            retValue = retValue.replace("LABEL", func)
+            for i in range(int(cnt)):
+                retValue += self.cmdFunctionPush
+            return True, retValue 
+
+        if ptn == 'call':
+            retValue = ''
+            return True, retValue 
+        
+        return False, '' 
+    def get1Args(self, ptn):
+        '''コマンドを取得する。存在しない場合は空白'''
+        if ptn == 'return':
+            retValue = self.cmdReturn
+            return True, retValue 
+        return False, ''     
+
+
 # ### パース
 
-# In[4]:
+# In[7]:
 
 
-def parse(ac, mac, pfc, l, fn):
+def parse(ac, mac, pfc, fcc, l, fn):
     '''1行分のデータを解析してasmコマンドを返す  
     ac : 算術コマンドクラス
     mac : メモリアクセスコマンドクラス
     pfc : プログラムフローコマンドクラス
+    fcc : 関数呼び出しコマンドクラス
     l : 入力データ(1行分)
     fn : 出力ファイル名 (メモリアクセスコマンドのstaticで使用)
     '''
@@ -263,12 +327,16 @@ def parse(ac, mac, pfc, l, fn):
     retCmd = ''
     if len(cmd) == 1:
         isGet, retCmd = ac.get(cmd[0])
+        if not isGet:
+            isGet, retCmd = fcc.get1Args(cmd[0])
 
     if len(cmd) == 2:
         isGet, retCmd = pfc.get(cmd[0], cmd[1])
 
     if len(cmd) == 3:
         isGet, retCmd = mac.get(cmd[0], cmd[1], cmd[2], fn)
+        if not isGet:
+            isGet, retCmd = fcc.get3Args(cmd[0], cmd[1], cmd[2])
 
     return isGet, retCmd
 
@@ -283,7 +351,7 @@ if __name__ != '__main__':
     print(parse(ac, mac, l, fn))
 
 
-# In[9]:
+# In[47]:
 
 
 import sys
@@ -329,20 +397,21 @@ def main(folderPath):
     ac = arithmeticCommand()
     mac = memoryAccessCommand()
     pfc = programFlowCommand()
+    fcc = functionCallCommand()
 
     with open(outputFn, 'w') as fout:
         for fn, lines in zip(inputFn, inputLines):
             for l in lines:
-                isGet, tmpList = parse(ac, mac, pfc, l, fn)
+                isGet, tmpList = parse(ac, mac, pfc, fcc, l, fn)
                 if isGet:
-                    fout.write(tmpList)
+                    fout.write("// " + l + tmpList)
 
     return True
 
 if __name__ == '__main__':
     #folderPath = sys.argv[1]
-    folderPath = "D:/#WorkSpace/nand2tetris/nand2tetris/projects/08/ProgramFlow/FibonacciSeries"
-    #folderPath = "D:/#WorkSpace/nand2tetris/nand2tetris/projects/08/FunctionCalls/FibonacciElement"
+    #folderPath = "D:/#WorkSpace/nand2tetris/nand2tetris/projects/08/ProgramFlow/FibonacciSeries"
+    folderPath = "D:/#WorkSpace/nand2tetris/nand2tetris/projects/08/FunctionCalls/SimpleFunction"
     isAssemble = main(folderPath)
     print(isAssemble)
 
