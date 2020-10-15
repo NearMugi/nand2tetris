@@ -11,124 +11,125 @@ M=0
 @SP
 M=M+1
 // push local 0
-@0
-D=A
 @LCL
-A=D+M
 D=M
-@SP
+@0 // 2
+A=D+A
+D=M
+@SP // 3
 A=M
 M=D
-@SP
+@SP // 4
 M=M+1
 // push local 1
-@1
-D=A
 @LCL
-A=D+M
 D=M
-@SP
+@1 // 2
+A=D+A
+D=M
+@SP // 3
 A=M
 M=D
-@SP
+@SP // 4
 M=M+1
 // add
-@SP
-A=M
-A=A-1
-A=A-1
+@SP // 1
+A=M-1
 D=M
-A=A+1
-D=D+M
-@SP
+@R13
+M=D
+@SP // 2
 M=M-1
-A=M
-A=A-1
+@SP // 3
+A=M-1
+D=M
+@R13 // 4
+D=D+M
+@SP // 5
+A=M-1
 M=D
 // not
-@SP
-A=M
-A=A-1
-M=!M
+@SP // 1
+A=M-1
+M=!M // 2
 // push argument 0
-@0
-D=A
 @ARG
-A=D+M
 D=M
-@SP
+@0 // 2
+A=D+A
+D=M
+@SP // 3
 A=M
 M=D
-@SP
+@SP // 4
 M=M+1
 // add
-@SP
-A=M
-A=A-1
-A=A-1
+@SP // 1
+A=M-1
 D=M
-A=A+1
-D=D+M
-@SP
+@R13
+M=D
+@SP // 2
 M=M-1
-A=M
-A=A-1
+@SP // 3
+A=M-1
+D=M
+@R13 // 4
+D=D+M
+@SP // 5
+A=M-1
 M=D
 // push argument 1
-@1
-D=A
 @ARG
-A=D+M
 D=M
-@SP
+@1 // 2
+A=D+A
+D=M
+@SP // 3
 A=M
 M=D
-@SP
+@SP // 4
 M=M+1
 // sub
-@SP
-A=M
-A=A-1
-A=A-1
+@SP // 1
+A=M-1
 D=M
-A=A+1
-D=D-M
-@SP
+@R13
+M=D
+@SP // 2
 M=M-1
-A=M
-A=A-1
+@SP // 3
+A=M-1
+D=M
+@R13 // 4
+D=D-M
+@SP // 5
+A=M-1
 M=D
 // return
-// 1
-@SP
-A=M
-A=A-1
-D=M
-@ARG
-A=M
-M=D
-@ARG
-D=M
-@SP
-M=D+1
-// 2
-@LCL
+@LCL // 1
 D=M
 @R13
 M=D
-// 3
-@R13
+@R13 // 2
 D=M
 @5
 A=D-A
 D=M
 @R14
 M=D
-// 4
-@R13
+@SP // 3
+A=M-1
 D=M
-@1
-A=D-A
+@ARG
+A=M
+M=D
+@ARG
+D=M+1
+@SP
+M=D
+@R13 // 4
+A=M-1
 D=M
 @THAT
 M=D
@@ -153,7 +154,6 @@ A=D-A
 D=M
 @LCL
 M=D
-// 5
-@R14
+@R14 // 5
 A=M
 0;JMP

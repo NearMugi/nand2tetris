@@ -52,31 +52,42 @@ class arithmeticCommand():
 
     def __init__(self):
         # 変数2個のパターン 
-        # 1. SPアドレスを取得 -> 2つ戻る -> 値取得 
-        # 2. 算術
-        # 3. SPアドレスを1つ戻す -> 値を2つ戻したところに保存する
-        cmdArg2_H = "@SP\nA=M\nA=A-1\nA=A-1\nD=M\nA=A+1\n"
-        cmdArg2_F = "@SP\nM=M-1\nA=M\nA=A-1\nM=D\n"
+        # 1. SP - 1を取得 -> 値をR13に保存
+        # 2. SPを1つ戻す        
+        # 3. SP - 1を取得 -> 値をDに保存
+        # 4. R13とDの値で算術
+        # 5. SP - 1を取得 -> 値を保存
+        cmdArg2_H = "@SP // 1\nA=M-1\nD=M\n@R13\nM=D\n"
+        cmdArg2_H += "@SP // 2\nM=M-1\n"
+        cmdArg2_H += "@SP // 3\nA=M-1\nD=M\n"
+        
+        cmdArg2_F = "@SP // 5\nA=M-1\nM=D\n"
 
         # 条件付き分岐のパターン
-        cmdBunki_H = "D=D-M\n@BUNKI_TRUE_000\n"
-        cmdBunki_F = "D=0\n@BUNKI_END_000\n0;JMP\n(BUNKI_TRUE_000)\nD=-1\n(BUNKI_END_000)\n"        
+        # 4-1. R13 - D
+        # 4-2. 分岐
+        # 4-3-False. SP - 1を取得 -> ゼロを保存 -> ENDへJump
+        # 4-3-True. SP - 1を取得 -> -1を保存
+        
+        cmdBunki_H = "@R13 // 4-1\nD=D-M\n"
+        cmdBunki_F = "@SP // 4-3-False\nA=M-1\nM=0\n@BUNKI_END_000\n0;JMP\n"
+        cmdBunki_F += "(BUNKI_TRUE_000) // 4-3-True\n@SP\nA=M-1\nM=-1\n(BUNKI_END_000)\n"        
 
         # 変数1個のパターン
-        # 1. SPアドレスを取得 -> 1つ戻る 
+        # 1. SP - 1を取得  -> 1つ戻る 
         # 2. 算術
         # ※SPアドレスは変化しない。
-        cmdArg1 = "@SP\nA=M\nA=A-1\n"
+        cmdArg1 = "@SP // 1\nA=M-1\n"
 
-        cmdAdd = cmdArg2_H + "D=D+M\n" + cmdArg2_F
-        cmdSub = cmdArg2_H + "D=D-M\n" + cmdArg2_F
-        cmdNeg = cmdArg1 + "M=-M\n"
-        cmdEq = cmdArg2_H + cmdBunki_H + "D;JEQ\n" + cmdBunki_F + cmdArg2_F
-        cmdGt = cmdArg2_H + cmdBunki_H + "D;JGT\n" + cmdBunki_F + cmdArg2_F
-        cmdLt = cmdArg2_H + cmdBunki_H + "D;JLT\n" + cmdBunki_F + cmdArg2_F
-        cmdAnd = cmdArg2_H + "D=D&M\n" + cmdArg2_F
-        cmdOr = cmdArg2_H + "D=D|M\n" + cmdArg2_F
-        cmdNot = cmdArg1 + "M=!M\n"
+        cmdAdd = cmdArg2_H + "@R13 // 4\nD=D+M\n" + cmdArg2_F
+        cmdSub = cmdArg2_H + "@R13 // 4\nD=D-M\n" + cmdArg2_F
+        cmdNeg = cmdArg1 + "M=-M // 2\n"
+        cmdEq = cmdArg2_H + cmdBunki_H + "@BUNKI_TRUE_000 // 4-2\nD;JEQ\n" + cmdBunki_F
+        cmdGt = cmdArg2_H + cmdBunki_H + "@BUNKI_TRUE_000 // 4-2\nD;JGT\n" + cmdBunki_F
+        cmdLt = cmdArg2_H + cmdBunki_H + "@BUNKI_TRUE_000 // 4-2\nD;JLT\n" + cmdBunki_F
+        cmdAnd = cmdArg2_H + "@R13 // 4\nD=D&M" + cmdArg2_F
+        cmdOr = cmdArg2_H + "@R13 // 4\nD=D|M\n" + cmdArg2_F
+        cmdNot = cmdArg1 + "M=!M // 2\n"
 
         tmpList = [
             ["add", cmdAdd],
@@ -128,36 +139,38 @@ class memoryAccessCommand():
 
     def __init__(self):
         # Push パターン
-        # 1. index値をセット
-        # 2. 取得元のアドレスを取得
-        # 3. スタックに追加 -> SPを1つ進ませる
-        cmdPush_H = "@INDEX\nD=A\n"
-        cmdPush_F = "@SP\nA=M\nM=D\n@SP\nM=M+1\n"
+        # 1. 取得元のアドレスを取得
+        # 2. index値を加算 -> そのアドレスの値を取得
+        # 3. スタックに追加 
+        # 4. SPを1つ進ませる
+        cmdPushAddIdx = "@INDEX // 2\nA=D+A\nD=M\n"
+        cmdPushAddStack = "@SP // 3\nA=M\nM=D\n"
+        cmdPushAddStack += "@SP // 4\nM=M+1\n"
 
         tmpPushList = [
-            ["argument", cmdPush_H + "@ARG\nA=D+M\nD=M\n" + cmdPush_F],
-            ["local", cmdPush_H + "@LCL\nA=D+M\nD=M\n" + cmdPush_F],
-            ["static", cmdPush_H + "@FN.INDEX\nA=D+A\nD=M\n" + cmdPush_F],
-            ["constant", cmdPush_H + cmdPush_F],
-            ["this", cmdPush_H + "@THIS\nA=D+M\nD=M\n" + cmdPush_F],
-            ["that", cmdPush_H + "@THAT\nA=D+M\nD=M\n" + cmdPush_F],
-            ["pointer", cmdPush_H + "@3\nA=D+A\nD=M\n" + cmdPush_F],
-            ["temp", cmdPush_H + "@5\nA=D+A\nD=M\n" + cmdPush_F],
+            ["argument", "@ARG\nD=M\n" + cmdPushAddIdx + cmdPushAddStack],
+            ["local", "@LCL\nD=M\n" + cmdPushAddIdx + cmdPushAddStack],
+            ["static", "@FN.static.INDEX\nD=M\n" + cmdPushAddStack],
+            ["constant", "@INDEX\nD=A\n" + cmdPushAddStack],
+            ["this", "@THIS\nD=M\n" + cmdPushAddIdx + cmdPushAddStack],
+            ["that", "@THAT\nD=M\n" + cmdPushAddIdx + cmdPushAddStack],
+            ["pointer", "@3\nD=M\n" + cmdPushAddIdx + cmdPushAddStack],
+            ["temp", "@5\nD=M\n" + cmdPushAddIdx + cmdPushAddStack],
         ]
         self.dictPush = dict(tmpPushList)
 
         # Pop パターン
-        # 1. baseアドレスを取得 -> index分加算 -> スタックに保存
+        # 1. baseアドレスを取得 -> index分加算 -> R13に保存
         # 2. SPを1つ戻す -> スタックデータを取得 -> 1.のアドレスにデータをセット
         # 3. SPを1つ戻す
-        cmdPop = "@INDEX\nD=D+A\n@SP\nA=M\nM=D\n"
-        cmdPop += "@SP\nA=M\nA=A-1\nD=M\nA=A+1\nA=M\nM=D\n"
+        cmdPop = "@INDEX\nD=D+A\n@R13\nM=D\n"
+        cmdPop += "@SP\nA=M-1\nD=M\n@R13\nA=M\nM=D\n"
         cmdPop += "@SP\nM=M-1\n"
 
         tmpPopList = [
             ["argument", "@ARG\nD=M\n" + cmdPop],
             ["local", "@LCL\nD=M\n" + cmdPop],
-            ["static", "@FN.INDEX\nD=A\n" + cmdPop],
+            ["static", "@SP\nA=M-1\nD=M\n@FN.static.INDEX\nM=D\n@SP\nM=M-1\n"],
             ["constant", "D=0\n" + cmdPop],
             ["this", "@THIS\nD=M\n" + cmdPop],
             ["that", "@THAT\nD=M\n" + cmdPop],
@@ -197,7 +210,7 @@ if __name__ != '__main__':
 # |goto xxx|無条件の移動命令|
 # |if-goto xxx|条件付きの移動命令。スタックの最上位の値をポップし、その値がゼロでなければ移動する|
 
-# In[20]:
+# In[3]:
 
 
 class programFlowCommand():
@@ -243,7 +256,7 @@ if __name__ != '__main__':
 # |call f m|fという関数を呼ぶ。m個の引数はスタックにプッシュ済み|
 # |return|呼び出し元へリターンする|
 
-# In[18]:
+# In[4]:
 
 
 class functionCallCommand():
@@ -263,21 +276,15 @@ class functionCallCommand():
         # 5. functionに移動
         # 6. リターンラベルをセット
         cmdPush = "@SP\nA=M\nM=D\n@SP\nM=M+1\n"
-        self.cmdCall = "// 1\n"
-        self.cmdCall += "@FUNC-ret\nD=A\n" + cmdPush
-        self.cmdCall += "// 2\n"
-        self.cmdCall += "@LCL\nD=M\n" + cmdPush
+        self.cmdCall = "@FUNC-ret // 1\nD=A\n" + cmdPush
+        self.cmdCall += "@LCL // 2\nD=M\n" + cmdPush
         self.cmdCall += "@ARG\nD=M\n" + cmdPush
         self.cmdCall += "@THIS\nD=M\n" + cmdPush
         self.cmdCall += "@THAT\nD=M\n" + cmdPush
-        self.cmdCall += "// 3\n"
-        self.cmdCall += "@CNT\nD=A\n@5\nD=D+A\n@SP\nD=M-D\n@ARG\nM=D\n"
-        self.cmdCall += "// 4\n"
-        self.cmdCall += "@SP\nD=M\n@LCL\nM=D\n"
-        self.cmdCall += "// 5\n"
-        self.cmdCall += "@FUNC\n0;JMP\n"
-        self.cmdCall += "// 5\n"
-        self.cmdCall += "(FUNC-ret)\n"
+        self.cmdCall += "@5 // 3\nD=A\n@CNT\nD=D+A\n@SP\nD=M-D\n@ARG\nM=D\n"
+        self.cmdCall += "@SP // 4\nD=M\n@LCL\nM=D\n"
+        self.cmdCall += "@FUNC // 5\n0;JMP\n"
+        self.cmdCall += "(FUNC-ret) // 6\n"
         
         # return
         # 1. LCLをR13に保存しておく
@@ -287,19 +294,14 @@ class functionCallCommand():
         # 4. 呼び出し元のLCL～THATに戻す
         #    LCLの位置から-1～-4に呼び出し元の値が入っている
         # 5. 2.で保存した呼び出し側のアドレスに移動する
-        self.cmdReturn = "// 1\n"
-        self.cmdReturn += "@LCL\nD=M\n@R13\nM=D\n"
-        self.cmdReturn += "// 2\n"
-        self.cmdReturn += "@R13\nD=M\n@5\nA=D-A\nD=M\n@R14\nM=D\n"
-        self.cmdReturn += "// 3\n"
-        self.cmdReturn += "@SP\nA=M-1\nD=M\n@ARG\nA=M\nM=D\n@ARG\nD=M+1\n@SP\nM=D\n"
-        self.cmdReturn += "// 4\n"
-        self.cmdReturn += "@R13\nD=M\n@1\nA=D-A\nD=M\n@THAT\nM=D\n"
+        self.cmdReturn = "@LCL // 1\nD=M\n@R13\nM=D\n"
+        self.cmdReturn += "@R13 // 2\nD=M\n@5\nA=D-A\nD=M\n@R14\nM=D\n"
+        self.cmdReturn += "@SP // 3\nA=M-1\nD=M\n@ARG\nA=M\nM=D\n@ARG\nD=M+1\n@SP\nM=D\n"
+        self.cmdReturn += "@R13 // 4\nA=M-1\nD=M\n@THAT\nM=D\n"
         self.cmdReturn += "@R13\nD=M\n@2\nA=D-A\nD=M\n@THIS\nM=D\n"
         self.cmdReturn += "@R13\nD=M\n@3\nA=D-A\nD=M\n@ARG\nM=D\n"
         self.cmdReturn += "@R13\nD=M\n@4\nA=D-A\nD=M\n@LCL\nM=D\n"
-        self.cmdReturn += "// 5\n"
-        self.cmdReturn += "@R14\nA=M\n0;JMP\n"
+        self.cmdReturn += "@R14 // 5\nA=M\n0;JMP\n"
         
     def get3Args(self, ptn, func, cnt):
         '''コマンドを取得する。存在しない場合は空白'''
@@ -327,7 +329,7 @@ class functionCallCommand():
 
 # ### パース
 
-# In[35]:
+# In[5]:
 
 
 def parse(ac, mac, pfc, fcc, l, fn):
@@ -381,7 +383,7 @@ if __name__ != '__main__':
     print(parse(ac, mac, l, fn))
 
 
-# In[50]:
+# In[8]:
 
 
 import sys
@@ -447,9 +449,22 @@ def main(folderPath):
     return True
 
 if __name__ == '__main__':
-    #folderPath = sys.argv[1]
-    #folderPath = "D:/#WorkSpace/nand2tetris/nand2tetris/projects/08/ProgramFlow/FibonacciSeries"
-    folderPath = "D:/#WorkSpace/nand2tetris/nand2tetris/projects/08/FunctionCalls/FibonacciElement"
-    isAssemble = main(folderPath)
-    print(isAssemble)
+    folderPath = "D:/#WorkSpace/nand2tetris/nand2tetris/projects/08/FunctionCalls/"
+    
+    fn = "SimpleFunction"
+    isAssemble = main(folderPath + fn)
+    print(fn, isAssemble)
+    
+    fn = "StaticsTest"
+    isAssemble = main(folderPath + fn)
+    print(fn, isAssemble)
+    
+    fn = "NestedCall"
+    isAssemble = main(folderPath + fn)
+    print(fn, isAssemble)
+    
+    fn = "FibonacciElement"
+    isAssemble = main(folderPath + fn)
+    print(fn, isAssemble)
+    
 
