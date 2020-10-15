@@ -4,7 +4,7 @@ D=A
 @SP
 M=D
 // call Sys.init 0
-@Sys.init-ret // 1
+@Sys.vm-Sys.init-return-000 // 1
 D=A
 @SP
 A=M
@@ -53,7 +53,7 @@ D=M
 M=D
 @Sys.init // 5
 0;JMP
-(Sys.init-ret) // 6
+(Sys.vm-Sys.init-return-000) // 6
 // function Sys.init 0
 (Sys.init)
 // push constant 6
@@ -73,7 +73,7 @@ M=D
 @SP // 4
 M=M+1
 // call Class1.set 2
-@Class1.set-ret // 1
+@Sys.vm-Class1.set-return-001 // 1
 D=A
 @SP
 A=M
@@ -122,7 +122,7 @@ D=M
 M=D
 @Class1.set // 5
 0;JMP
-(Class1.set-ret) // 6
+(Sys.vm-Class1.set-return-001) // 6
 // pop temp 0 // Dumps the return value
 @5
 D=A
@@ -155,7 +155,7 @@ M=D
 @SP // 4
 M=M+1
 // call Class2.set 2
-@Class2.set-ret // 1
+@Sys.vm-Class2.set-return-002 // 1
 D=A
 @SP
 A=M
@@ -204,7 +204,7 @@ D=M
 M=D
 @Class2.set // 5
 0;JMP
-(Class2.set-ret) // 6
+(Sys.vm-Class2.set-return-002) // 6
 // pop temp 0 // Dumps the return value
 @5
 D=A
@@ -221,7 +221,7 @@ M=D
 @SP
 M=M-1
 // call Class1.get 0
-@Class1.get-ret // 1
+@Sys.vm-Class1.get-return-003 // 1
 D=A
 @SP
 A=M
@@ -270,9 +270,9 @@ D=M
 M=D
 @Class1.get // 5
 0;JMP
-(Class1.get-ret) // 6
+(Sys.vm-Class1.get-return-003) // 6
 // call Class2.get 0
-@Class2.get-ret // 1
+@Sys.vm-Class2.get-return-004 // 1
 D=A
 @SP
 A=M
@@ -321,7 +321,7 @@ D=M
 M=D
 @Class2.get // 5
 0;JMP
-(Class2.get-ret) // 6
+(Sys.vm-Class2.get-return-004) // 6
 // label WHILE
 (WHILE)
 // goto WHILE
@@ -344,7 +344,7 @@ M=M+1
 @SP
 A=M-1
 D=M
-@Class1.static.0
+@Class1.vm.static.0
 M=D
 @SP
 M=M-1
@@ -363,7 +363,7 @@ M=M+1
 @SP
 A=M-1
 D=M
-@Class1.static.1
+@Class1.vm.static.1
 M=D
 @SP
 M=M-1
@@ -429,7 +429,7 @@ A=M
 // function Class1.get 0
 (Class1.get)
 // push static 0
-@Class1.static.0
+@Class1.vm.static.0
 D=M
 @SP // 3
 A=M
@@ -437,7 +437,7 @@ M=D
 @SP // 4
 M=M+1
 // push static 1
-@Class1.static.1
+@Class1.vm.static.1
 D=M
 @SP // 3
 A=M
@@ -528,7 +528,7 @@ M=M+1
 @SP
 A=M-1
 D=M
-@Class2.static.0
+@Class2.vm.static.0
 M=D
 @SP
 M=M-1
@@ -547,7 +547,7 @@ M=M+1
 @SP
 A=M-1
 D=M
-@Class2.static.1
+@Class2.vm.static.1
 M=D
 @SP
 M=M-1
@@ -613,7 +613,7 @@ A=M
 // function Class2.get 0
 (Class2.get)
 // push static 0
-@Class2.static.0
+@Class2.vm.static.0
 D=M
 @SP // 3
 A=M
@@ -621,7 +621,7 @@ M=D
 @SP // 4
 M=M+1
 // push static 1
-@Class2.static.1
+@Class2.vm.static.1
 D=M
 @SP // 3
 A=M

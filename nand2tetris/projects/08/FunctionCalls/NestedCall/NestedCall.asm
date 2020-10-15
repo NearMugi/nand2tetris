@@ -4,7 +4,7 @@ D=A
 @SP
 M=D
 // call Sys.init 0
-@Sys.init-ret // 1
+@Sys.vm-Sys.init-return-000 // 1
 D=A
 @SP
 A=M
@@ -53,7 +53,7 @@ D=M
 M=D
 @Sys.init // 5
 0;JMP
-(Sys.init-ret) // 6
+(Sys.vm-Sys.init-return-000) // 6
 // function Sys.init 0
 (Sys.init)
 // push constant 4000	// test THIS and THAT context save
@@ -103,7 +103,7 @@ M=D
 @SP
 M=M-1
 // call Sys.main 0
-@Sys.main-ret // 1
+@Sys.vm-Sys.main-return-001 // 1
 D=A
 @SP
 A=M
@@ -152,7 +152,7 @@ D=M
 M=D
 @Sys.main // 5
 0;JMP
-(Sys.main-ret) // 6
+(Sys.vm-Sys.main-return-001) // 6
 // pop temp 1
 @5
 D=A
@@ -324,7 +324,7 @@ M=D
 @SP // 4
 M=M+1
 // call Sys.add12 1
-@Sys.add12-ret // 1
+@Sys.vm-Sys.add12-return-002 // 1
 D=A
 @SP
 A=M
@@ -373,7 +373,7 @@ D=M
 M=D
 @Sys.add12 // 5
 0;JMP
-(Sys.add12-ret) // 6
+(Sys.vm-Sys.add12-return-002) // 6
 // pop temp 0
 @5
 D=A

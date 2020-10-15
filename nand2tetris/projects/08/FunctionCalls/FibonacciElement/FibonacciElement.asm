@@ -4,7 +4,7 @@ D=A
 @SP
 M=D
 // call Sys.init 0
-@Sys.init-ret // 1
+@Sys.vm-Sys.init-return-000 // 1
 D=A
 @SP
 A=M
@@ -53,7 +53,7 @@ D=M
 M=D
 @Sys.init // 5
 0;JMP
-(Sys.init-ret) // 6
+(Sys.vm-Sys.init-return-000) // 6
 // function Sys.init 0
 (Sys.init)
 // push constant 4
@@ -65,7 +65,7 @@ M=D
 @SP // 4
 M=M+1
 // call Main.fibonacci 1   // computes the 4'th fibonacci element
-@Main.fibonacci-ret // 1
+@Sys.vm-Main.fibonacci-return-001 // 1
 D=A
 @SP
 A=M
@@ -114,7 +114,7 @@ D=M
 M=D
 @Main.fibonacci // 5
 0;JMP
-(Main.fibonacci-ret) // 6
+(Sys.vm-Main.fibonacci-return-001) // 6
 // label WHILE
 (WHILE)
 // goto WHILE              // loops infinitely
@@ -154,18 +154,18 @@ A=M-1
 D=M
 @R13 // 4-1
 D=D-M
-@BUNKI_TRUE_000 // 4-2
+@BUNKI-TRUE-000 // 4-2
 D;JLT
 @SP // 4-3-False
 A=M-1
 M=0
-@BUNKI_END_000
+@BUNKI-END-000
 0;JMP
-(BUNKI_TRUE_000) // 4-3-True
+(BUNKI-TRUE-000) // 4-3-True
 @SP
 A=M-1
 M=-1
-(BUNKI_END_000)
+(BUNKI-END-000)
 // if-goto IF_TRUE
 @SP
 AM=M-1
@@ -277,7 +277,7 @@ D=D-M
 A=M-1
 M=D
 // call Main.fibonacci 1  // computes fib(n-2)
-@Main.fibonacci-ret // 1
+@Main.vm-Main.fibonacci-return-002 // 1
 D=A
 @SP
 A=M
@@ -326,7 +326,7 @@ D=M
 M=D
 @Main.fibonacci // 5
 0;JMP
-(Main.fibonacci-ret) // 6
+(Main.vm-Main.fibonacci-return-002) // 6
 // push argument 0
 @ARG
 D=M
@@ -363,7 +363,7 @@ D=D-M
 A=M-1
 M=D
 // call Main.fibonacci 1  // computes fib(n-1)
-@Main.fibonacci-ret // 1
+@Main.vm-Main.fibonacci-return-003 // 1
 D=A
 @SP
 A=M
@@ -412,7 +412,7 @@ D=M
 M=D
 @Main.fibonacci // 5
 0;JMP
-(Main.fibonacci-ret) // 6
+(Main.vm-Main.fibonacci-return-003) // 6
 // add                    // returns fib(n-1) + fib(n-2)
 @SP // 1
 A=M-1

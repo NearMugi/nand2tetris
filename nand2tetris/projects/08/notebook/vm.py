@@ -44,7 +44,7 @@
 # 
 # コマンドごとに書き方は決まっている。基本形を定義して必要に応じて差し替える。
 
-# In[1]:
+# In[9]:
 
 
 class arithmeticCommand():
@@ -70,8 +70,8 @@ class arithmeticCommand():
         # 4-3-True. SP - 1を取得 -> -1を保存
         
         cmdBunki_H = "@R13 // 4-1\nD=D-M\n"
-        cmdBunki_F = "@SP // 4-3-False\nA=M-1\nM=0\n@BUNKI_END_000\n0;JMP\n"
-        cmdBunki_F += "(BUNKI_TRUE_000) // 4-3-True\n@SP\nA=M-1\nM=-1\n(BUNKI_END_000)\n"        
+        cmdBunki_F = "@SP // 4-3-False\nA=M-1\nM=0\n@BUNKI-END-000\n0;JMP\n"
+        cmdBunki_F += "(BUNKI-TRUE-000) // 4-3-True\n@SP\nA=M-1\nM=-1\n(BUNKI-END-000)\n"        
 
         # 変数1個のパターン
         # 1. SP - 1を取得  -> 1つ戻る 
@@ -82,9 +82,9 @@ class arithmeticCommand():
         cmdAdd = cmdArg2_H + "@R13 // 4\nD=D+M\n" + cmdArg2_F
         cmdSub = cmdArg2_H + "@R13 // 4\nD=D-M\n" + cmdArg2_F
         cmdNeg = cmdArg1 + "M=-M // 2\n"
-        cmdEq = cmdArg2_H + cmdBunki_H + "@BUNKI_TRUE_000 // 4-2\nD;JEQ\n" + cmdBunki_F
-        cmdGt = cmdArg2_H + cmdBunki_H + "@BUNKI_TRUE_000 // 4-2\nD;JGT\n" + cmdBunki_F
-        cmdLt = cmdArg2_H + cmdBunki_H + "@BUNKI_TRUE_000 // 4-2\nD;JLT\n" + cmdBunki_F
+        cmdEq = cmdArg2_H + cmdBunki_H + "@BUNKI-TRUE-000 // 4-2\nD;JEQ\n" + cmdBunki_F
+        cmdGt = cmdArg2_H + cmdBunki_H + "@BUNKI-TRUE-000 // 4-2\nD;JGT\n" + cmdBunki_F
+        cmdLt = cmdArg2_H + cmdBunki_H + "@BUNKI-TRUE-000 // 4-2\nD;JLT\n" + cmdBunki_F
         cmdAnd = cmdArg2_H + "@R13 // 4\nD=D&M" + cmdArg2_F
         cmdOr = cmdArg2_H + "@R13 // 4\nD=D|M\n" + cmdArg2_F
         cmdNot = cmdArg1 + "M=!M // 2\n"
@@ -256,7 +256,7 @@ if __name__ != '__main__':
 # |call f m|fという関数を呼ぶ。m個の引数はスタックにプッシュ済み|
 # |return|呼び出し元へリターンする|
 
-# In[4]:
+# In[11]:
 
 
 class functionCallCommand():
@@ -276,7 +276,7 @@ class functionCallCommand():
         # 5. functionに移動
         # 6. リターンラベルをセット
         cmdPush = "@SP\nA=M\nM=D\n@SP\nM=M+1\n"
-        self.cmdCall = "@FUNC-ret // 1\nD=A\n" + cmdPush
+        self.cmdCall = "@FN-FUNC-return-000 // 1\nD=A\n" + cmdPush
         self.cmdCall += "@LCL // 2\nD=M\n" + cmdPush
         self.cmdCall += "@ARG\nD=M\n" + cmdPush
         self.cmdCall += "@THIS\nD=M\n" + cmdPush
@@ -284,7 +284,9 @@ class functionCallCommand():
         self.cmdCall += "@5 // 3\nD=A\n@CNT\nD=D+A\n@SP\nD=M-D\n@ARG\nM=D\n"
         self.cmdCall += "@SP // 4\nD=M\n@LCL\nM=D\n"
         self.cmdCall += "@FUNC // 5\n0;JMP\n"
-        self.cmdCall += "(FUNC-ret) // 6\n"
+        self.cmdCall += "(FN-FUNC-return-000) // 6\n"
+        
+        self.idx = 0
         
         # return
         # 1. LCLをR13に保存しておく
@@ -303,7 +305,7 @@ class functionCallCommand():
         self.cmdReturn += "@R13\nD=M\n@4\nA=D-A\nD=M\n@LCL\nM=D\n"
         self.cmdReturn += "@R14 // 5\nA=M\n0;JMP\n"
         
-    def get3Args(self, ptn, func, cnt):
+    def get3Args(self, ptn, func, cnt, fn):
         '''コマンドを取得する。存在しない場合は空白'''
         if ptn == 'function':
             retValue = self.cmdFunction
@@ -314,8 +316,11 @@ class functionCallCommand():
 
         if ptn == 'call':
             retValue = self.cmdCall
+            retValue = retValue.replace("FN", fn)
             retValue = retValue.replace("FUNC", func)
             retValue = retValue.replace("CNT", cnt)
+            retValue = retValue.replace("000", format(self.idx, '03x'))
+            self.idx += 1            
             return True, retValue 
         
         return False, '' 
@@ -329,7 +334,7 @@ class functionCallCommand():
 
 # ### パース
 
-# In[5]:
+# In[13]:
 
 
 def parse(ac, mac, pfc, fcc, l, fn):
@@ -368,7 +373,7 @@ def parse(ac, mac, pfc, fcc, l, fn):
     if len(cmd) == 3:
         isGet, retCmd = mac.get(cmd[0], cmd[1], cmd[2], fn)
         if not isGet:
-            isGet, retCmd = fcc.get3Args(cmd[0], cmd[1], cmd[2])
+            isGet, retCmd = fcc.get3Args(cmd[0], cmd[1], cmd[2], fn)
 
     return isGet, retCmd
 
@@ -383,7 +388,7 @@ if __name__ != '__main__':
     print(parse(ac, mac, l, fn))
 
 
-# In[8]:
+# In[16]:
 
 
 import sys
@@ -409,7 +414,7 @@ def main(folderPath):
     # Sys.vm を取得する
     if "Sys.vm" in vmFiles:
         # ファイル名をリストに保存
-        inputFn.append("Sys")
+        inputFn.append("Sys.vm")
         # Sys 専用コマンドを先頭に追加
         inputLines += [["bootStrap\n", "call Sys.init 0\n"]]
         with open(os.path.join(folderPath, "Sys.vm"), 'r') as fin:
@@ -422,7 +427,7 @@ def main(folderPath):
     vmFiles = [f for f in vmFiles if not "Sys.vm" in f]
     for fn in vmFiles:
         # ファイル名をリストに保存
-        inputFn.append(fn.replace('.vm', ''))
+        inputFn.append(fn)
         with open(os.path.join(folderPath, fn), 'r') as fin:
             # ファイルの中身をリストに保存
             inputLines.append(fin.readlines())        
