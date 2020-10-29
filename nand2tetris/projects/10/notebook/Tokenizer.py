@@ -19,13 +19,15 @@
 
 # ## トークン生成クラス
 
-# In[40]:
+# In[44]:
 
 
 class createToken:
     tupleKeyword = ('class', 'constructor', 'function', 'method', 'field', 'static', 'var', 'int', 'char', 'boolean', 'void', 'true', 'false', 'null', 'this', 'let', 'do', 'if', 'else', 'while', 'return')
     tupleSymbol = ('{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&', '|', '<', '>', '=', '~', )
-
+    
+    xmlChangeSymbol = {"<" : "&lt;", ">" : "&gt;", "&" : "&amp;"}
+    
     xmlKeyword = "<keyword> @ </keyword>\n"
     xmlSymbol = "<symbol> @ </symbol>\n"
     xmlIntegerConstant = "<integerConstant> @ </integerConstant>\n"
@@ -57,19 +59,19 @@ class createToken:
     
     def getTokens(self, code):
         '''jackファイルの1行をトークンに分ける'''
-        # コメントを削除        
-        # 余計な空白を削除
-        code = code.replace('/*', '//')
+        # 余計な空白やタブ、改行を削除
         code = code.replace('\n', '')
+        code = code.replace('\t', ' ')
         code = code.replace('  ', ' ')
-        # コメント、空白行は処理しない
-        if '//' in code[0:2]:
-            return False, ""
-        if len(code) == 0:
-            return False, ""
+        
         # コードの後ろにあるコメントを削除
         if '//' in code:
-            code = code.split('/')[0]        
+            code = code.split('//')[0]
+        # コメント、空白行は処理しない
+        if '//' in code[0:2]:
+            return False, [], []
+        if len(code) == 0:
+            return False, [], []
         # ダブルクォートあり -> 挟まれているところはスペース含めてStringConstant
         tmpCodes = code.split('\"')
         tokens = list()
@@ -78,7 +80,7 @@ class createToken:
             # ダブルクォート前
             codes = self.devideSymbol(tmpCodes[0])
             tokens = codes
-            xmls += self.getXml(codes)
+            xmls = self.getXml(codes)
             # ダブルクォート内
             codes = tmpCodes[1]
             tokens.append(codes)
@@ -89,12 +91,12 @@ class createToken:
             xmls += self.getXml(codes)
         else:
             tokens = self.devideSymbol(tmpCodes[0])
-            xmls.append(self.getXml(tokens))
+            xmls = self.getXml(tokens)
                     
         return True, tokens, xmls
 
     def getXml(self, tokens):
-        '''トークンをxml形式に変換する。stringConstantは'''
+        '''トークンをxml形式に変換する。stringConstantは事前に処理している'''
         xmls = list()
         for t in tokens:
             # Keyword
@@ -103,6 +105,8 @@ class createToken:
                 continue
             # Symbol
             if t in self.tupleSymbol:
+                if t in self.xmlChangeSymbol:
+                    t = self.xmlChangeSymbol[t]
                 xmls.append(self.xmlSymbol.replace("@", t))
                 continue
             # integerConstant
@@ -114,9 +118,9 @@ class createToken:
             
         return xmls
         
-if __name__ == "__main__":
+if __name__ != "__main__":
     ct = createToken()
-    isGet, tokens, xmls = ct.getTokens('    function void test() {  // Added to test Jack syntax that is not use in\n')
+    isGet, tokens, xmls = ct.getTokens('j = j / (-2);   // note: unary negate constant 2 \n')
     print(isGet, tokens, xmls)
         
     
@@ -124,8 +128,58 @@ if __name__ == "__main__":
 
 # ## ファイル生成
 
-# In[ ]:
+# In[45]:
 
 
+import os
+import sys
 
+def checkFolder(folderPath):
+    '''指定したフォルダ内のファイルをチェックしてトークンファイルを出力する'''
+    # フォルダ内にjackファイルがあるかチェックする
+    files = os.listdir(folderPath)
+    files_file = [f for f in files if os.path.isfile(os.path.join(folderPath, f))]
+    jackFiles = [f for f in files_file if ".jack" in f]
+
+    if len(jackFiles) <= 0:
+        return False
+    
+    for fn in jackFiles:
+        createFile(folderPath, fn)
+    return True
+
+def createFile(folderPath, fn):
+    '''トークンファイルを生成する'''
+    ct = createToken()
+    outputFn = fn.split('.')[0] + "T.xml"
+    outputFn = os.path.join(folderPath, outputFn)    
+    
+    isComment = False
+    with open(outputFn, 'w') as fout:
+        fout.write("<tokens>\n")
+        with open(os.path.join(folderPath, fn), 'r') as fin:
+            lines = fin.readlines()
+            for l in lines:
+                # /* ～ */で囲まれているコメントは除外する
+                # 複数行に渡る場合がある
+                if "/*" in l:
+                    isComment = True
+                if "*/" in l:
+                    isComment = False
+                    continue
+                if isComment:
+                    continue
+                    
+                isGet, tokens, xmls = ct.getTokens(l)
+                if isGet is True:
+                    for x in xmls:
+                        fout.write(x)
+        fout.write("</tokens>\n")
+
+    return True
+
+if __name__ == "__main__":
+    checkFolder("./ArrayTest")
+    checkFolder("./ExpressionLessSquare")
+    checkFolder("./Square")
 
