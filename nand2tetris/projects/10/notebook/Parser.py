@@ -434,7 +434,7 @@ class keywordDoStatement:
             # do
             ret = "<doStatement>\n" + line
             self.step += 1
-            nextKeyword = "subroutineCall"
+            nextKeyword = "subroutineCallInDo"
         elif self.step == 1:
             if " ; " in line:
                 # 終了
@@ -443,13 +443,75 @@ class keywordDoStatement:
         return errMsg, nextKeyword, isClose, False, ret
 
 
+# ## subroutineCall(doStatement向け)  
+# subroutineName **(** expressionList **)** | (className | varName) **.** subroutineName **(** expressionList **)**  
+# * doStatementから呼ばれる 
+# * className or varName **.** が付く場合がある  
+# * **)** が来たら閉じる
+# * **term** ではないので、＜term＞＜/term＞で括る必要はない。
+
+# In[11]:
+
+
+class keywordSubroutineCallInDo:
+    step = 0
+    def __init__(self):
+        self.step = 0
+    def check(self, line):
+        errMsg = ""
+        nextKeyword = ""
+        isClose = False
+        isRemain = False
+        ret = ""
+    
+        if self.step == 0:
+            ret = line
+            self.step += 1
+        elif self.step == 1:
+            # ( or .
+            if " ( " in line:
+                ret = line
+                self.step += 1            
+                # 次はexpressionList
+                nextKeyword = "expressionList"
+            else:
+                ret = line
+                self.step += 1            
+        elif self.step == 2:
+            # ) or subroutineName
+            if " ) " in line:
+                ret = line
+                isClose = True
+            else:
+                ret = line
+                self.step += 1            
+        elif self.step == 3:
+            # ( 
+            if " ( " in line:
+                ret = line
+                self.step += 1            
+                # 次はexpressionList
+                nextKeyword = "expressionList"
+            else:
+                errMsg = (__class__.__name__, self.step, "( is missing")    
+        elif self.step == 4:
+            # ) 
+            if " ) " in line:
+                ret = line
+                isClose = True
+            else:
+                errMsg = (__class__.__name__, self.step, ") is missing")       
+                
+        return errMsg, nextKeyword, isClose, isRemain, ret
+
+
 # ## returnStatementキーワード  
 # **return** expression? **;**  
 # * **return** が来た時に該当  
 # * expressionが来ることもある  
 # * **;** が来たら閉じる
 
-# In[11]:
+# In[12]:
 
 
 class keywordReturnStatement:
@@ -481,7 +543,7 @@ class keywordReturnStatement:
 # * termとセット  
 # * term = term のような形式もある  
 
-# In[12]:
+# In[13]:
 
 
 class keywordExpression:
@@ -525,7 +587,7 @@ class keywordExpression:
     
 
 
-# In[35]:
+# In[14]:
 
 
 class keywordExpressionInTerm:
@@ -573,7 +635,7 @@ class keywordExpressionInTerm:
 # * 2文字目 : \[ の場合、次はexpression ,( or . の場合、subroutineCall それ以外の場合は終了
 # * 終了条件 : \], ), ; が来たら処理を終わらせてスタックを削除する＆**ひとつ前のスタックを処理する**
 
-# In[72]:
+# In[15]:
 
 
 class keywordTerm:
@@ -660,69 +722,6 @@ class keywordTerm:
     
 
 
-# ## subroutineCall  
-# subroutineName **(** expressionList **)** | (className | varName) **.** subroutineName **(** expressionList **)**  
-# * className or varName **.** が付く場合がある  
-# * **)** が来たら閉じる
-# 
-
-# In[68]:
-
-
-class keywordSubroutineCall:
-    step = 0
-    def __init__(self):
-        self.step = 0
-    def check(self, line):
-        errMsg = ""
-        nextKeyword = ""
-        isClose = False
-        isRemain = False
-        ret = ""
-    
-        if self.step == 0:
-            ret = line
-            self.step += 1
-        elif self.step == 1:
-            # ( or .
-            if " ( " in line:
-                ret = line
-                self.step += 1            
-                # 次はexpressionList
-                nextKeyword = "expressionList"
-            else:
-                ret = line
-                self.step += 1            
-        elif self.step == 2:
-            # ) or subroutineName
-            if " ) " in line:
-#                ret = line + "</term>\n"
-                ret = line
-                isClose = True
-            else:
-                ret = line
-                self.step += 1            
-        elif self.step == 3:
-            # ( 
-            if " ( " in line:
-                ret = line
-                self.step += 1            
-                # 次はexpressionList
-                nextKeyword = "expressionList"
-            else:
-                errMsg = (__class__.__name__, self.step, "( is missing")    
-        elif self.step == 4:
-            # ) 
-            if " ) " in line:
-#                ret = line + "</term>\n"
-                ret = line
-                isClose = True
-            else:
-                errMsg = (__class__.__name__, self.step, ") is missing")       
-                
-        return errMsg, nextKeyword, isClose, isRemain, ret
-
-
 # ## expressionListキーワード  
 # (expression (**,** expression)*)?  
 # * subroutineCallのときだけ使う
@@ -763,7 +762,7 @@ class keywordExpressionList:
 
 # ## スタック管理
 
-# In[45]:
+# In[17]:
 
 
 class stack:
@@ -789,8 +788,8 @@ class stack:
         if self.nextKeyword == "expression":
             self.keywordStackList.append(keywordExpression())
             return True, isElse
-        if self.nextKeyword == "subroutineCall":
-            self.keywordStackList.append(keywordSubroutineCall())
+        if self.nextKeyword == "subroutineCallInDo":
+            self.keywordStackList.append(keywordSubroutineCallInDo())
             return True, isElse
         if self.nextKeyword == "expressionList":
             self.keywordStackList.append(keywordExpressionList())
@@ -873,7 +872,7 @@ class stack:
 
 # ## ファイル生成
 
-# In[73]:
+# In[18]:
 
 
 import os
